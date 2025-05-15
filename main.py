@@ -55,7 +55,7 @@ import requests
 import os
 import re
 import json
-import chromadb
+#import chromadb
 from helpers import (
     extract_resume_text,
     extract_job_description,
@@ -89,11 +89,6 @@ with st.sidebar:
     word_limit = st.slider("Word Limit", 100, 400, 200, step=50)
     st.session_state["tone"] = tone
     st.session_state["word_limit"] = word_limit
-
-# ------------------ ChromaDB Client Setup ------------------ #
-# Updated to use the new PersistentClient API:
-chroma_client = chromadb.PersistentClient(path="./coldmail_chroma")
-email_collection = chroma_client.get_or_create_collection(name="email_history")
 
 # ------------------ App Title & Description ------------------ #
 st.markdown("<h1 style='text-align: center;'>📬 ColdMail Generator</h1>", unsafe_allow_html=True)
@@ -183,22 +178,6 @@ Limit to {st.session_state['word_limit']} words. Tone: {st.session_state['tone']
 
             st.text_area("📝 Your Generated Message", value=response, height=350)
             st.download_button("📥 Download", data=response, file_name=f"{prompt_type}.txt", mime="text/plain")
-
-            # Save generated email to ChromaDB with its vector representation
-            embedder_instance = load_embedder()  # Same cached embedder
-            email_embedding = embedder_instance.encode(response).tolist()
-            email_collection.add(
-                documents=[response],
-                embeddings=[email_embedding],
-                ids=[f"email_{len(st.session_state['email_history'])}"],
-                metadatas=[{
-                    "type": prompt_type,
-                    "ats_score": ats,
-                    "semantic_score": semantic_score,
-                    "final_score": final_score,
-                    "company": company_name
-                }]
-            )
 
 # ------------------ Display History ------------------ #
 if st.session_state["email_history"]:
